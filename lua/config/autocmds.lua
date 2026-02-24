@@ -7,7 +7,7 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
--- Workaround for autocmd tab key function params 
+-- Workaround for autocmd tab key function params
 --local luasnip = require('luasnip')
 --
 --vim.api.nvim_create_autocmd("ModeChanged", {
@@ -29,3 +29,12 @@
 --  end,
 --})
 
+--vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+--  pattern = "term://*claude*",
+--  callback = function()
+--    vim.defer_fn(function()
+--      vim.cmd("resize -1")
+--      vim.cmd("resize +1")
+--    end, 100)
+--  end,
+--})
