@@ -76,6 +76,17 @@ local function toggle_terminals()
   if vim.tbl_contains(terms, function(t)
     return t.buf == vim.api.nvim_get_current_buf()
   end, { predicate = true }) then
+    -- Closing split terminals one by one widens the remaining ones, and Neovim
+    -- resizes them right away; each resize makes the shell redraw its prompt
+    -- (piling up duplicates). Detach the terminal buffers first so no window
+    -- shows them, which keeps their size untouched, then close the windows.
+    local scratch = vim.api.nvim_create_buf(false, true)
+    vim.bo[scratch].bufhidden = "wipe"
+    for _, t in ipairs(visible) do
+      vim.api.nvim_win_call(t.win, function()
+        vim.cmd("noautocmd buffer " .. scratch)
+      end)
+    end
     for _, t in ipairs(visible) do
       t:hide()
     end
