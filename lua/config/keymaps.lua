@@ -27,3 +27,80 @@ vim.keymap.set("n", "d<Down>", function()
     vim.api.nvim_buf_set_lines(0, line, line + 1, false, {})
   end
 end, { desc = "Delete line below without yanking" })
+
+-- Toggle the gitsigns blame column for the current buffer, keeping focus
+-- (and insert mode) in the current window
+vim.keymap.set({ "n", "i" }, "<A-l>", function()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "gitsigns-blame" then
+      vim.api.nvim_win_close(win, false)
+      return
+    end
+  end
+  local cur = vim.api.nvim_get_current_win()
+  require("gitsigns").blame(nil, function()
+    vim.schedule(function()
+      if vim.api.nvim_win_is_valid(cur) then
+        vim.api.nvim_set_current_win(cur)
+      end
+    end)
+  end)
+end, { desc = "Toggle Git Blame Column" })
+
+-- Plain shell terminals (Snacks terminals without a cmd, i.e. not lazygit/Claude),
+-- sorted by their terminal number
+local function shell_terminals()
+  local ret = {}
+  for _, term in ipairs(Snacks.terminal.list()) do
+    local info = vim.b[term.buf].snacks_terminal
+    if info and info.cmd == nil then
+      table.insert(ret, term)
+    end
+  end
+  table.sort(ret, function(a, b)
+    return vim.b[a.buf].snacks_terminal.id < vim.b[b.buf].snacks_terminal.id
+  end)
+  return ret
+end
+
+-- <C-/>: show/hide all shell terminals together (replaces LazyVim's, which only
+-- handles terminal #1). A count (e.g. 2<C-/>) keeps the original behavior.
+local function toggle_terminals()
+  local terms = shell_terminals()
+  if vim.v.count > 0 or #terms == 0 then
+    return Snacks.terminal.focus(nil, { cwd = LazyVim.root() })
+  end
+  local visible = vim.tbl_filter(function(t)
+    return t:win_valid()
+  end, terms)
+  if vim.tbl_contains(terms, function(t)
+    return t.buf == vim.api.nvim_get_current_buf()
+  end, { predicate = true }) then
+    for _, t in ipairs(visible) do
+      t:hide()
+    end
+  elseif #visible > 0 then
+    visible[1]:focus()
+  else
+    for _, t in ipairs(terms) do
+      t:show()
+    end
+    terms[1]:focus()
+  end
+end
+vim.keymap.set({ "n", "t" }, "<C-/>", toggle_terminals, { desc = "Toggle Terminals" })
+vim.keymap.set({ "n", "t" }, "<C-_>", toggle_terminals, { desc = "which_key_ignore" })
+
+-- <A-n> in a shell terminal: open another shell terminal next to it
+vim.keymap.set("t", "<A-n>", function()
+  local info = vim.b.snacks_terminal
+  if not (info and info.cmd == nil) then
+    -- not a shell terminal (e.g. lazygit/Claude): pass the key through
+    return vim.api.nvim_feedkeys(vim.keycode("<A-n>"), "n", false)
+  end
+  local max = 0
+  for _, t in ipairs(shell_terminals()) do
+    max = math.max(max, vim.b[t.buf].snacks_terminal.id)
+  end
+  Snacks.terminal.focus(nil, { cwd = info.cwd, count = max + 1 })
+end, { desc = "New Terminal Split" })
