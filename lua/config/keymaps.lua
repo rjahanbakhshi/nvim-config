@@ -115,3 +115,9 @@ vim.keymap.set("t", "<A-n>", function()
   end
   Snacks.terminal.focus(nil, { cwd = info.cwd, count = max + 1 })
 end, { desc = "New Terminal Split" })
+
+-- Ctrl+Backspace: delete the word before the cursor
+-- (some terminals send <C-BS>, others <C-H>)
+for _, key in ipairs({ "<C-BS>", "<C-H>" }) do
+  vim.keymap.set({ "i", "c" }, key, "<C-w>", { desc = "Delete previous word" })
+end
