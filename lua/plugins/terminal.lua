@@ -26,6 +26,13 @@ return {
             -- toggles the plain shell terminal.
             hide_slash = false,
             hide_underscore = false,
+            -- Drop LazyVim's <C-h/j/k/l> window navigation in terminal mode so
+            -- the keys reach the program (<C-l> clears the shell, <C-h> is
+            -- Ctrl+Backspace). Windows are navigated with Shift+Ctrl+arrows.
+            nav_h = false,
+            nav_j = false,
+            nav_k = false,
+            nav_l = false,
           },
         },
       },

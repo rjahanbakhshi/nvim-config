@@ -14,15 +14,6 @@ return {
         -- only treats as Ctrl+Backspace on Windows unless told so here.
         CLAUDE_CODE_BS_AS_CTRL_BACKSPACE = "1",
       },
-      terminal = {
-        snacks_win_opts = {
-          keys = {
-            -- LazyVim's Snacks terminal key <C-h> (go to left window) would
-            -- swallow that byte; let it reach Claude in this terminal.
-            nav_h = false,
-          },
-        },
-      },
     },
     keys = {
       {
@@ -32,18 +23,21 @@ return {
           -- separate float covering the real Claude window. Toggling Claude while
           -- zoomed closes the window under the float (looks like nothing happens)
           -- and leaves the float orphaned, so un-zooming shows a blank panel.
-          -- Exit zoom first so focus returns to the real window, then toggle.
+          -- Exit zoom first so focus returns to the real window.
+          -- ClaudeCodeFocus opens/focuses the panel when it is not focused
+          -- and hides it only when pressed from inside it (like <C-/> for
+          -- the shell terminal).
           if Snacks.zen.win and Snacks.zen.win:valid() then
             Snacks.zen.zoom()
             vim.schedule(function()
-              vim.cmd("ClaudeCode --continue")
+              vim.cmd("ClaudeCodeFocus --continue")
             end)
           else
-            vim.cmd("ClaudeCode --continue")
+            vim.cmd("ClaudeCodeFocus --continue")
           end
         end,
         mode = { "n", "i", "t" },
-        desc = "Continue Claude",
+        desc = "Focus/Hide Claude",
       },
     },
   },
